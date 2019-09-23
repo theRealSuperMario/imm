@@ -13,52 +13,58 @@ from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import nn_ops
 
 
-def max_pool(x, size, stride=None, name=None, info=DummyDict(), padding='SAME'):
+def max_pool(x, size, stride=None, name=None, info=DummyDict(), padding="SAME"):
     if stride is None:
         stride = size
 
-    z = tf.nn.max_pool(x, ksize=[1, size, size, 1],
-                          strides=[1, stride, stride, 1],
-                          padding=padding,
-                          name=name)
+    z = tf.nn.max_pool(
+        x,
+        ksize=[1, size, size, 1],
+        strides=[1, stride, stride, 1],
+        padding=padding,
+        name=name,
+    )
 
-    info['activations'][name] = z
+    info["activations"][name] = z
     return z
 
 
-def avg_pool(x, size, stride=None, name=None, info=DummyDict(), padding='SAME'):
+def avg_pool(x, size, stride=None, name=None, info=DummyDict(), padding="SAME"):
     if stride is None:
         stride = size
 
-    z = tf.nn.avg_pool(x, ksize=[1, size, size, 1],
-                          strides=[1, stride, stride, 1],
-                          padding=padding,
-                          name=name)
+    z = tf.nn.avg_pool(
+        x,
+        ksize=[1, size, size, 1],
+        strides=[1, stride, stride, 1],
+        padding=padding,
+        name=name,
+    )
 
-    info['activations'][name] = z
+    info["activations"][name] = z
     return z
 
 
 def dropout(x, drop_prob, phase_test=None, name=None, info=DummyDict()):
     assert phase_test is not None
     with tf.name_scope(name):
-        keep_prob = tf.cond(phase_test,
-                            lambda: tf.constant(1.0),
-                            lambda: tf.constant(1.0 - drop_prob))
+        keep_prob = tf.cond(
+            phase_test, lambda: tf.constant(1.0), lambda: tf.constant(1.0 - drop_prob)
+        )
 
         z = tf.nn.dropout(x, keep_prob, name=name)
-    info['activations'][name] = z
+    info["activations"][name] = z
     return z
 
 
 def scale(x, name=None, value=1.0):
-    s = tf.get_variable(name, [], dtype=tf.float32,
-                        initializer=tf.constant_initializer(value))
+    s = tf.get_variable(
+        name, [], dtype=tf.float32, initializer=tf.constant_initializer(value)
+    )
     return x * s
 
 
-def inner(x, channels, info=DummyDict(), stddev=None,
-          activation=tf.nn.relu, name=None):
+def inner(x, channels, info=DummyDict(), stddev=None, activation=tf.nn.relu, name=None):
     with tf.name_scope(name):
         f = channels
         features = np.prod(x.get_shape().as_list()[1:])
@@ -72,24 +78,22 @@ def inner(x, channels, info=DummyDict(), stddev=None,
         b_init = tf.constant_initializer(0.0)
 
         with tf.variable_scope(name):
-            W = tf.get_variable('weights', shape, dtype=tf.float32,
-                                initializer=W_init)
-            b = tf.get_variable('biases', [f], dtype=tf.float32,
-                                initializer=b_init)
+            W = tf.get_variable("weights", shape, dtype=tf.float32, initializer=W_init)
+            b = tf.get_variable("biases", [f], dtype=tf.float32, initializer=b_init)
 
         z = tf.nn.bias_add(tf.matmul(xflat, W), b)
 
     if activation is not None:
         z = activation(z)
 
-    if info.get('scale_summary'):
-        with tf.name_scope('activation'):
-            tf.summary.scalar('activation/' + name, tf.sqrt(tf.reduce_mean(z**2)))
+    if info.get("scale_summary"):
+        with tf.name_scope("activation"):
+            tf.summary.scalar("activation/" + name, tf.sqrt(tf.reduce_mean(z ** 2)))
 
-    info['activations'][name] = z
-    if 'weights' in info:
-        info['weights'][name + ':weights'] = W
-        info['weights'][name + ':biases'] = b
+    info["activations"][name] = z
+    if "weights" in info:
+        info["weights"][name + ":weights"] = W
+        info["weights"][name + ":biases"] = b
     return z
 
 
@@ -100,10 +104,12 @@ def atrous_avg_pool(value, size, rate, padding, name=None, info=DummyDict()):
             raise ValueError("rate {} cannot be less than one".format(rate))
 
         if rate == 1:
-            value = nn_ops.avg_pool(value=value,
-                                                                strides=[1, 1, 1, 1],
-                                                                ksize=[1, size, size, 1],
-                                                                padding=padding)
+            value = nn_ops.avg_pool(
+                value=value,
+                strides=[1, 1, 1, 1],
+                ksize=[1, size, size, 1],
+                padding=padding,
+            )
             return value
 
         # We have two padding contributions. The first is used for converting "SAME"
@@ -150,31 +156,45 @@ def atrous_avg_pool(value, size, rate, padding, name=None, info=DummyDict()):
         pad_right_extra = (rate - in_width % rate) % rate
 
         # The paddings argument to space_to_batch includes both padding components.
-        space_to_batch_pad = [[pad_top, pad_bottom + pad_bottom_extra],
-                                                    [pad_left, pad_right + pad_right_extra]]
+        space_to_batch_pad = [
+            [pad_top, pad_bottom + pad_bottom_extra],
+            [pad_left, pad_right + pad_right_extra],
+        ]
 
-        value = array_ops.space_to_batch(input=value,
-                                                                         paddings=space_to_batch_pad,
-                                                                         block_size=rate)
+        value = array_ops.space_to_batch(
+            input=value, paddings=space_to_batch_pad, block_size=rate
+        )
 
-        value = nn_ops.avg_pool(value=value, ksize=[1, size, size, 1],
-                                                            strides=[1, 1, 1, 1],
-                                                            padding="VALID",
-                                                            name=name)
+        value = nn_ops.avg_pool(
+            value=value,
+            ksize=[1, size, size, 1],
+            strides=[1, 1, 1, 1],
+            padding="VALID",
+            name=name,
+        )
 
         # The crops argument to batch_to_space is just the extra padding component.
         batch_to_space_crop = [[0, pad_bottom_extra], [0, pad_right_extra]]
 
-        value = array_ops.batch_to_space(input=value,
-                                                                         crops=batch_to_space_crop,
-                                                                         block_size=rate)
+        value = array_ops.batch_to_space(
+            input=value, crops=batch_to_space_crop, block_size=rate
+        )
 
-    info['activations'][name] = value
+    info["activations"][name] = value
     return value
 
 
-def conv(x, channels, size=3, strides=1, activation=tf.nn.relu, name=None, padding='SAME',
-         info=DummyDict(), output_shape=None):
+def conv(
+    x,
+    channels,
+    size=3,
+    strides=1,
+    activation=tf.nn.relu,
+    name=None,
+    padding="SAME",
+    info=DummyDict(),
+    output_shape=None,
+):
     with tf.name_scope(name):
         features = x.get_shape().as_list()[3]
         f = channels
@@ -183,29 +203,34 @@ def conv(x, channels, size=3, strides=1, activation=tf.nn.relu, name=None, paddi
         W_init = tf.contrib.layers.variance_scaling_initializer()
         b_init = tf.constant_initializer(0.0)
 
-        W = tf.get_variable(name + '/weights', shape, dtype=tf.float32,
-                            initializer=W_init)
-        b = tf.get_variable(name + '/biases', [f], dtype=tf.float32,
-                            initializer=b_init)
-        z = tf.nn.conv2d(
-                x,
-                W,
-                strides=[1, strides, strides, 1],
-                padding=padding)
+        W = tf.get_variable(
+            name + "/weights", shape, dtype=tf.float32, initializer=W_init
+        )
+        b = tf.get_variable(name + "/biases", [f], dtype=tf.float32, initializer=b_init)
+        z = tf.nn.conv2d(x, W, strides=[1, strides, strides, 1], padding=padding)
 
         z = tf.nn.bias_add(z, b)
         if activation is not None:
             z = activation(z)
-        info['weights'][name + ':weights'] = W
-        info['weights'][name + ':biases'] = b
-        info['activations'][name] = z
+        info["weights"][name + ":weights"] = W
+        info["weights"][name + ":biases"] = b
+        info["activations"][name] = z
         if output_shape is not None:
             assert list(output_shape) == list(z.get_shape().as_list())
         return z
 
 
-def upconv(x, channels, size=3, strides=1, output_shape=None, activation=tf.nn.relu, name=None, padding='SAME',
-         info=DummyDict()):
+def upconv(
+    x,
+    channels,
+    size=3,
+    strides=1,
+    output_shape=None,
+    activation=tf.nn.relu,
+    name=None,
+    padding="SAME",
+    info=DummyDict(),
+):
     with tf.name_scope(name):
         features = x.get_shape().as_list()[3]
         f = channels
@@ -214,23 +239,22 @@ def upconv(x, channels, size=3, strides=1, output_shape=None, activation=tf.nn.r
         W_init = tf.contrib.layers.variance_scaling_initializer()
         b_init = tf.constant_initializer(0.0)
 
-        W = tf.get_variable(name + '/weights', shape, dtype=tf.float32,
-                            initializer=W_init)
-        b = tf.get_variable(name + '/biases', [f], dtype=tf.float32,
-                            initializer=b_init)
+        W = tf.get_variable(
+            name + "/weights", shape, dtype=tf.float32, initializer=W_init
+        )
+        b = tf.get_variable(name + "/biases", [f], dtype=tf.float32, initializer=b_init)
         z = tf.nn.conv2d_transpose(
-                x,
-                W,
-                output_shape=output_shape,
-                strides=[1, strides, strides, 1],
-                padding=padding)
+            x,
+            W,
+            output_shape=output_shape,
+            strides=[1, strides, strides, 1],
+            padding=padding,
+        )
 
         z = tf.nn.bias_add(z, b)
         if activation is not None:
             z = activation(z)
-        info['weights'][name + ':weights'] = W
-        info['weights'][name + ':biases'] = b
-        info['activations'][name] = z
+        info["weights"][name + ":weights"] = W
+        info["weights"][name + ":biases"] = b
+        info["activations"][name] = z
         return z
-
-

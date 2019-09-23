@@ -14,11 +14,11 @@ color2num = dict(
     magenta=35,
     cyan=36,
     white=37,
-    crimson=38
+    crimson=38,
 )
 
 
-def colorize(string, color, bold=False, highlight = False):
+def colorize(string, color, bold=False, highlight=False):
     """Return string surrounded by appropriate terminal color codes to
     print colorized text.  Valid colors: gray, red, green, yellow,
     blue, magenta, cyan, white, crimson
@@ -31,25 +31,32 @@ def colorize(string, color, bold=False, highlight = False):
 
     attr = []
     num = color2num[color]
-    if highlight: num += 10
+    if highlight:
+        num += 10
     attr.append(six.u(str(num)))
-    if bold: attr.append(six.u('1'))
-    attrs = six.u(';').join(attr)
-    return six.u('\x1b[%sm%s\x1b[0m') % (attrs, string)
+    if bold:
+        attr.append(six.u("1"))
+    attrs = six.u(";").join(attr)
+    return six.u("\x1b[%sm%s\x1b[0m") % (attrs, string)
+
 
 def green(s):
-  return colorize(s,'green',bold=True)
+    return colorize(s, "green", bold=True)
+
 
 def blue(s):
-  return colorize(s,'blue',bold=True)
+    return colorize(s, "blue", bold=True)
+
 
 def red(s):
-  return colorize(s,'red',bold=True)
+    return colorize(s, "red", bold=True)
+
 
 def magenta(s):
-  return colorize(s,'magenta',bold=True)
+    return colorize(s, "magenta", bold=True)
 
-def colorize_mat(mat,hsv):
+
+def colorize_mat(mat, hsv):
     """
     Colorizes the values in a 2D matrix MAT
     to the color as defined by the color HSV.
@@ -61,11 +68,9 @@ def colorize_mat(mat,hsv):
     Returns an uint8 'RGB' image.
     """
     mat = mat.astype(np.float32)
-    m,M = np.min(mat), np.max(mat)
-    v = (mat - m) / (M-m)
-    h,s = hsv[0] * np.ones_like(v), hsv[1]*np.ones_like(v)
-    hsv = np.dstack([h,s,v])
+    m, M = np.min(mat), np.max(mat)
+    v = (mat - m) / (M - m)
+    h, s = hsv[0] * np.ones_like(v), hsv[1] * np.ones_like(v)
+    hsv = np.dstack([h, s, v])
     rgb = (255 * colors.hsv_to_rgb(hsv)).astype(np.uint8)
     return rgb
-
-

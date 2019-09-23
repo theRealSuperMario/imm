@@ -12,21 +12,21 @@ from . import printing
 
 def create(scale_summary=False):
     info = {
-        'activations': OrderedDict(),
-        'init': OrderedDict(),
-        'config': dict(return_weights=False),
-        'weights': OrderedDict(),
-        'vars': OrderedDict(),
+        "activations": OrderedDict(),
+        "init": OrderedDict(),
+        "config": dict(return_weights=False),
+        "weights": OrderedDict(),
+        "vars": OrderedDict(),
     }
     if scale_summary:
-        info['scale_summary'] = True
+        info["scale_summary"] = True
     return info
 
 
 def print_init(info):
-    for k, v in info['init'].items():
-        if v.startswith('file'):
-            v = printing.paint(v, 'green')
+    for k, v in info["init"].items():
+        if v.startswith("file"):
+            v = printing.paint(v, "green")
         else:
-            v = printing.paint(v, 'red')
-        print('{:20s}{}'.format(k, v))
+            v = printing.paint(v, "red")
+        print("{:20s}{}".format(k, v))
