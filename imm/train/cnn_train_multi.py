@@ -24,6 +24,14 @@ from ..utils.colorize import colorize
 from ..utils import utils
 
 
+try:
+    # Python 2
+    xrange
+except NameError:
+    # Python 3, xrange is now named range
+    xrange = range
+
+
 def get_train_summaries(scope):
     summaries = tf.get_collection(tf.GraphKeys.SUMMARIES, scope)
     return summaries
@@ -555,7 +563,7 @@ def train_loop(
         start_step = session.run(global_step)
         # run the training loop:
         begin_time = time.time()
-        for step in xrange(start_step, num_steps):
+        for step in xrange(int(start_step), int(num_steps)):
             start_time = time.time()
             if fwd_only:  # useful for timing..
                 feed_dict = {handle_pl: train_handle, training_pl: False}

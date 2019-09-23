@@ -1,4 +1,4 @@
-tensorflow-gpu==1.10.0
+tensorflow-gpu==1.13.1
 torch==0.4.1
 scipy
 pillow

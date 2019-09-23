@@ -90,6 +90,9 @@ def load_dataset(data_root, dataset, subset):
     return image_dir, images, keypoints
 
 
+8
+
+
 class CelebADataset(TPSDataset):
     LANDMARK_LABELS = {"left_eye": 0, "right_eye": 1}
     N_LANDMARKS = 5
@@ -198,3 +201,10 @@ class CelebADataset(TPSDataset):
                 }
             )
         return inputs
+
+
+if __name__ == "__main__":
+    dset = CelebADataset(
+        "/mnt/comp/compvis_datasets/jakab18_celeba/celeba/", "train", "celeba"
+    )
+    image_pair = next(dset.sample_image_pair())

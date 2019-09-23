@@ -11,6 +11,12 @@ import itertools
 import random
 
 
+try:
+    xrange(n)
+except:
+    xrange = range
+
+
 def softmax(x, temp=1.0, axis=-1):
     """
   Softmax of x in python.

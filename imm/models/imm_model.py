@@ -17,6 +17,13 @@ from ..utils import utils as utils
 from ..tf_utils.op_utils import dev_wrap
 from ..tf_utils import op_utils
 
+try:
+    # Python 2
+    xrange
+except NameError:
+    # Python 3, xrange is now named range
+    xrange = range
+
 
 def image_summary(name, tensor, train_outputs=1, test_outputs=2):
     tf.summary.image(name, tensor, max_outputs=train_outputs, family="train")
