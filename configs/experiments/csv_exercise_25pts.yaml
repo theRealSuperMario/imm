@@ -20,7 +20,7 @@ training:
     max_samples: 1000
   logdir: ${logdir}/${name}
   datadir: ${exercise_data_dir}
-  batch: 50
+  batch: 20
   allow_growth: True
   optim: Adam
   lr:
@@ -31,7 +31,7 @@ training:
 model:
     gauss_std: 0.10
     gauss_mode: 'rot'
-    n_maps: 50
+    n_maps: 25
 
     n_filters: 32
     block_sizes: [1, 1, 1]

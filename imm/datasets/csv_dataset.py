@@ -91,7 +91,7 @@ class CSVDataset(ImagePairDataset):
 
     def _get_ordered_stream(self):
         for i in range(len(self)):
-            view0 = self.labels["file_path_"][i]
+            view0 = self.labels[self.fname_col_name][i]
             view1 = view0  # TODO: this is a dirty hack because I do not know it better
             yield {"image": view0, "future_image": view1}
 
