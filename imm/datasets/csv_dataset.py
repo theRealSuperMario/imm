@@ -70,7 +70,7 @@ class CSVDataset(ImagePairDataset):
         self.labels = load_dataset(data_dir, data_csv, id_col_name, fname_col_name)
         self.fname_col_name = fname_col_name
         self.id_col_name = id_col_name
-        self._length = len(list(self.labels.items())[0])
+        self._length = len(self.labels[id_col_name])
         if max_samples is None:
             self._max_samples = self._length  #  TODO: not sure if this is a good idea
         else:
@@ -90,7 +90,7 @@ class CSVDataset(ImagePairDataset):
         return pair
 
     def _get_ordered_stream(self):
-        for i in range(len(self)):
+        for i in range(self._max_samples):
             view0 = self.labels[self.fname_col_name][i]
             view1 = view0  # TODO: this is a dirty hack because I do not know it better
             yield {"image": view0, "future_image": view1}
@@ -121,10 +121,12 @@ class CSVDataset(ImagePairDataset):
 
 if __name__ == "__main__":
     dset = CSVDataset(
-        "/home/sandro/Projekte/gitlab_projects/2019_ma_hd/ma_code/nips19/baselines/jakab18/imm/data/datasets/exercise_dataset/",
-        "/home/sandro/Projekte/gitlab_projects/2019_ma_hd/ma_code/nips19/baselines/jakab18/imm/data/datasets/exercise_dataset/csvs/instance_level_train_split.csv",
+        "/export/home/sabraun/code/imm/data/datasets/exercise_dataset/",
+        "/export/home/sabraun/code/imm/data/datasets/exercise_dataset/csvs/instance_level_test_split.csv",
         id_col_name="id",
         fname_col_name="im1",
         subset="train",
+        dataset="csv"
     )
     image_pair = next(dset.sample_image_pair())
+    print(len(dset))

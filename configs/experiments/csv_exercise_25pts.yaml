@@ -13,11 +13,11 @@ training:
   test_dset_params:
     dataset: csv
     subset: test
-    data_csv: ${exercise_data_dir}/csvs/instance_level_test_split.csv
+    data_csv: ${exercise_data_dir}/denseposed_csv/denseposed_instance_level_test_split.csv
     id_col_name: "id"
     fname_col_name: "im1"
     order_stream: True
-    max_samples: 1000
+    max_samples: 2000
   logdir: ${logdir}/${name}
   datadir: ${exercise_data_dir}
   batch: 20
