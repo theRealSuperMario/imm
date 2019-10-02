@@ -6,7 +6,7 @@ import os
 import sys
 from contextlib import closing
 from multiprocessing import Pool
-
+from typing import *
 import click
 import cv2
 import numpy as np
@@ -16,6 +16,36 @@ import yaml
 from tabulate import tabulate
 
 from supermariopy import crf, denseposelib, imageutils
+
+def list_of_dicts2dict_of_lists(list_of_dicts: List[Dict]) -> Dict[Hashable, List]:
+    '''
+
+    Parameters
+    ----------
+    list_of_dicts
+
+    Returns
+    -------
+
+    Examples
+    --------
+
+    list_of_dicts = [{1 : 1}, {1 : 2}]
+    list_of_dicts2dict_of_lists(list_of_dicts)
+    >>> {1: [1, 2]}
+
+    '''
+    arregated_keys = set()
+    for d in list_of_dicts:
+        arregated_keys.update(list(d.keys()))
+
+    dict_of_lists = {k: [] for k in arregated_keys}
+
+    for d in list_of_dicts:
+        for k in arregated_keys:
+            dict_of_lists[k].append(d[k])
+
+    return dict_of_lists
 
 
 def batched_keypoints_to_segments(img, keypoints, segmentation_algorithm):
@@ -38,18 +68,11 @@ def batched_keypoints_to_segments(img, keypoints, segmentation_algorithm):
     return MAP, MAP_colorized, heatmaps_rgb, im_with_keypoints
 
 
-def process_data(fname, segmentation_algorithm, output_folder):
+def process_batches(t, segmentation_algorithm):
     """Load data from .npy file and infer segmentation
     """
-    print("processing {}".format(fname))
-    loaded_data = np.load(fname)
-    loaded_data = {key: value for key, value in loaded_data.items()}
-    data = loaded_data
-    img_batch = data["image"].copy()
-    keypoints_batch = np.copy(data["gauss_yx"])[
-        ..., ::-1
-    ]  # ::-1 because the coordinate axes are flipped
-
+    print("processing batches")
+    img_batch, keypoints_batch = t
     func = functools.partial(
         batched_keypoints_to_segments,
         **{"segmentation_algorithm": segmentation_algorithm}
@@ -67,6 +90,13 @@ def process_data(fname, segmentation_algorithm, output_folder):
         "ims_with_keypoints": ims_with_keypoints,
     }
     return processed_data
+
+
+def load_npz(fname):
+    print("loading {}".format(fname))
+    loaded_data = np.load(fname)
+    loaded_data = {key: value for key, value in loaded_data.items()}
+    return loaded_data
 
 
 def get_iuv_files(densepose_csv_path, root, max_n_samples, fname_col="im1"):
@@ -149,22 +179,26 @@ def main(infer_dir, output_folder, run_crf_config, n_processes):
         **segmentation_algorithm_args
     )
 
+    data = []
+    with closing(Pool(n_processes)) as p:
+        for outputs in tqdm.tqdm(p.imap(load_npz, npz_files)):
+            data.append(outputs)
+    data = list_of_dicts2dict_of_lists(data)
+    data = {k : np.concatenate(data[k]) for k in ["image", "gauss_yx"]}
+    data["gauss_yx"] = data["gauss_yx"][..., ::-1]
+
+
     process_func = functools.partial(
-        process_data,
+        process_batches,
         **{
-            "output_folder": output_folder,
             "segmentation_algorithm": segmentation_algorithm,
         }
     )
-
+    tuples = list(zip(np.split(data["image"], n_processes, 0) , np.split(data["gauss_yx"], n_processes, 0)))
     processed_data = []
     with closing(Pool(n_processes)) as p:
-        for outputs in tqdm.tqdm(p.imap(process_func, npz_files)):
+        for outputs in tqdm.tqdm(p.imap(process_func, tuples)):
             processed_data.append(outputs)
-    # processed_data = []
-    # for file_ in npz_files:
-    #     outputs = process_func(file_)
-    #     processed_data.append(outputs)
 
     labels = np.concatenate([p["labels"] for p in processed_data], 0)
     labels_rgb = np.concatenate([p["labels_rgb"] for p in processed_data], 0)

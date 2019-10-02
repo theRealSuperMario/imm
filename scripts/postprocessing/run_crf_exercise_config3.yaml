@@ -8,7 +8,7 @@ segmentation_algorithm_args:
   var : 0.1
   n_steps : 5
 
-n_inferred_parts : 16
+n_inferred_parts : 25
 
 dp_semantic_remap_dict : {
     "arms" : ['left_upper_arm',
