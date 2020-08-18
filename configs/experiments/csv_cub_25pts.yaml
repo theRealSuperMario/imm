@@ -1,4 +1,4 @@
-name: csv_deepfashion_25pts
+name: csv_cub_25pts
 training:
   ncheckpoint: 2000
   n_test: 1000
@@ -7,19 +7,19 @@ training:
   train_dset_params:
     dataset: csv
     subset: train
-    data_csv: ${deepfashion_data_dir}/csvs/filted_up_train.csv
-    id_col_name: "id"
+    data_csv: ${cub_data_dir}/train.csv
+    id_col_name: "idx"
     fname_col_name: "fname"
   test_dset_params:
     dataset: csv
     subset: test
-    data_csv: ${deepfashion_data_dir}/denseposed_csvs/denseposed_filted_up_test.csv
-    id_col_name: "id"
+    data_csv: ${cub_data_dir}/test.csv
+    id_col_name: "idx"
     fname_col_name: "fname"
     order_stream: True
-    max_samples: 983 # length of dataset
+    max_samples: 800
   logdir: ${logdir}/${name}
-  datadir: ${deepfashion_data_dir}
+  datadir: ${cub_data_dir}
   batch: 20
   allow_growth: True
   optim: Adam

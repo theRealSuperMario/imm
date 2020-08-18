@@ -51,7 +51,7 @@ def list_of_dicts2dict_of_lists(list_of_dicts: List[Dict]) -> Dict[Hashable, Lis
 def batched_keypoints_to_segments(img, keypoints, segmentation_algorithm):
     n_keypoints = keypoints.shape[0]
     MAP = segmentation_algorithm(img, keypoints)
-    MAP_colorized = imageutils.make_colors(n_keypoints + 1)[MAP]
+    MAP_colorized = imageutils.make_colors(n_keypoints + 1, with_background=True, background_id=0)[MAP]
     heatmaps = imageutils.keypoints_to_heatmaps(
         img.shape[:2], keypoints, segmentation_algorithm.var
     )
@@ -194,7 +194,7 @@ def main(infer_dir, output_folder, run_crf_config, n_processes):
             "segmentation_algorithm": segmentation_algorithm,
         }
     )
-    tuples = list(zip(np.split(data["image"], n_processes, 0) , np.split(data["gauss_yx"], n_processes, 0)))
+    tuples = list(zip(np.array_split(data["image"], n_processes, 0) , np.array_split(data["gauss_yx"], n_processes, 0)))
     processed_data = []
     with closing(Pool(n_processes)) as p:
         for outputs in tqdm.tqdm(p.imap(process_func, tuples)):
@@ -224,15 +224,16 @@ def main(infer_dir, output_folder, run_crf_config, n_processes):
     fname_col = config["data_fname_col"]
 
     iuv_files = get_iuv_files(densepose_csv_path, data_root, len(labels), fname_col)
-    iuvs = np.stack([cv2.imread(x, -1) for x in iuv_files], axis=0)[..., 0]
+    iuvs = [cv2.imread(x, -1) for x in iuv_files]
+    iuvs = [denseposelib.resize_labels(i[..., 0], labels.shape[1:]) for i in iuvs]
+    iuvs = np.stack(iuvs, axis=0)
+
 
     dp_semantic_remap_dict = config["dp_semantic_remap_dict"]
     dp_new_part_list = sorted(list(dp_semantic_remap_dict.keys()))
     dp_remap_dict = denseposelib.semantic_remap_dict2remap_dict(
         dp_semantic_remap_dict, dp_new_part_list
     )
-
-    iuvs = denseposelib.resize_labels(iuvs, labels.shape[1:])
 
     remapped_gt_segmentation, remapped_inferred = denseposelib.get_best_segmentation(
         iuvs, labels, dp_remap_dict
@@ -255,11 +256,8 @@ def main(infer_dir, output_folder, run_crf_config, n_processes):
     os.makedirs(target_dir, exist_ok=True)
 
     background_color = np.array([1, 1, 1])
-    colors1 = imageutils.make_colors(config["n_inferred_parts"] + 1)
-    colors2 = imageutils.make_colors(len(dp_new_part_list))
-    colors2 = np.insert(
-        colors2, dp_new_part_list.index("background"), background_color, axis=0
-    )
+    colors1 = imageutils.make_colors(config["n_inferred_parts"] + 1, with_background=True, background_id=0)
+    colors2 = imageutils.make_colors(len(dp_new_part_list), with_background=True, background_id=dp_new_part_list.index("background"))
     for i, (im1, im2, im3) in enumerate(
         zip(labels, remapped_inferred, remapped_gt_segmentation)
     ):

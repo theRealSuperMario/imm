@@ -1,3 +1,133 @@
+## Update
+
+- symlink logs
+```bash
+ln -s /export/scratch/sabraun/imm/logs 
+
+# from /export/home/sabraun/code/imm
+export PYTHONPATH=$PYTHONPATH:$(pwd)
+# Train on exercise
+conda activate jakab18
+python scripts/train.py --configs configs/paths/default.yaml \
+configs/experiments/csv_exercise_25pts.yaml
+
+# Train on deepfashion
+conda activate jakab18
+python scripts/train.py --configs configs/paths/default.yaml \
+configs/experiments/csv_deepfashion_25pts.yaml
+
+# Train on Pennaction jumping sequence
+conda activate jakab18
+python scripts/train.py --configs configs/paths/default.yaml \
+configs/experiments/csv_pennaction_25pts.yaml
+
+# Train on CUB subset by Lorenz et al. [2019]
+conda activate jakab18
+python scripts/train.py --configs configs/paths/default.yaml \
+configs/experiments/csv_cub_25pts.yaml
+```
+
+Possible Problem with Deepfashion : not a video dataset. Treat it as an image dataset?
+
+## Testing
+
+```bash
+export PYTHONPATH=$PYTHONPATH:$(pwd)
+python scripts/infer.py \
+--experiment-name csv_exercise_25pts \
+--dataset csv \
+--iteration 106000
+
+
+python scripts/infer.py \
+--experiment-name csv_deepfashion_25pts \
+--dataset csv \
+--iteration 180000
+
+
+python scripts/infer.py \
+--experiment-name csv_pennaction_25pts \
+--dataset csv \
+--iteration 824000
+```
+
+## Postprocessing
+
+### Deepfashion
+
+```bash
+    ## source activate nips19
+    ## cd
+python scripts/postprocessing/run_crf.py \
+data/logs/csv_deepfashion_25pts_test \
+data/logs/csv_deepfashion_25pts_test/postprocessing1 \
+scripts/postprocessing/run_crf_deepfashion_config1.yaml \
+--n-processes 8
+
+python scripts/postprocessing/run_crf.py \
+data/logs/csv_deepfashion_25pts_test \
+data/logs/csv_deepfashion_25pts_test/postprocessing2 \
+scripts/postprocessing/run_crf_deepfashion_config2.yaml \
+--n-processes 8
+
+python scripts/postprocessing/run_crf.py \
+data/logs/csv_deepfashion_25pts_test \
+data/logs/csv_deepfashion_25pts_test/postprocessing3 \
+scripts/postprocessing/run_crf_deepfashion_config3.yaml \
+--n-processes 8
+```
+
+### Exercise
+
+```bash
+## source activate nips19
+## cd
+python scripts/postprocessing/run_crf.py \
+data/logs/csv_exercise_25pts_test \
+data/logs/csv_exercise_25pts_test/postprocessing1 \
+scripts/postprocessing/run_crf_exercise_config1.yaml \
+--n-processes 8
+
+python scripts/postprocessing/run_crf.py \
+data/logs/csv_exercise_25pts_test \
+data/logs/csv_exercise_25pts_test/postprocessing2 \
+scripts/postprocessing/run_crf_exercise_config2.yaml \
+--n-processes 8
+
+python scripts/postprocessing/run_crf.py \
+data/logs/csv_exercise_25pts_test \
+data/logs/csv_exercise_25pts_test/postprocessing3 \
+scripts/postprocessing/run_crf_exercise_config3.yaml \
+--n-processes 8
+```
+
+
+### Pennaction
+
+
+```bash
+## source activate nips19
+## cd
+python scripts/postprocessing/run_crf.py \
+data/logs/csv_pennaction_25pts_test \
+data/logs/csv_pennaction_25pts_test/postprocessing1 \
+scripts/postprocessing/run_crf_pennaction_config1.yaml \
+--n-processes 8
+
+python scripts/postprocessing/run_crf.py \
+data/logs/csv_pennaction_25pts_test \
+data/logs/csv_pennaction_25pts_test/postprocessing2 \
+scripts/postprocessing/run_crf_pennaction_config2.yaml \
+--n-processes 8
+
+python scripts/postprocessing/run_crf.py \
+data/logs/csv_pennaction_25pts_test \
+data/logs/csv_pennaction_25pts_test/postprocessing3 \
+scripts/postprocessing/run_crf_pennaction_config3.yaml \
+--n-processes 8
+```
+
+
 # [Unsupervised Learning of Object Landmarks through Conditional Image Generation](http://www.robots.ox.ac.uk/~vgg/research/unsupervised_landmarks/)
 
 [Tomas Jakab*](http://www.robots.ox.ac.uk/~tomj), [Ankush Gupta*](http://www.robots.ox.ac.uk/~ankush), Hakan Bilen, Andrea Vedaldi (* equal contribution).
